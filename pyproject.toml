@@ -1,0 +1,72 @@
+[project]
+name = "pyaudiocpp"
+version = "0.1.0"
+description = "ctypes bindings for audio.cpp: local TTS, ASR, VAD, diarization, separation and voice conversion."
+readme = "README.md"
+authors = [
+    { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
+]
+license = "MIT"
+requires-python = ">=3.10"
+keywords = ["audio", "tts", "asr", "speech", "ggml", "audio.cpp", "ctypes"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Topic :: Multimedia :: Sound/Audio :: Speech",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/shakfu/pyaudiocpp"
+
+[build-system]
+requires = ["scikit-build-core>=0.10"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.version = ">=3.20"
+cmake.build-type = "Release"
+build.targets = ["audiocpp"]
+# Wheels are for other machines; `make lib` keeps host-native tuning.
+cmake.define = { PYAUDIOCPP_PORTABLE = "ON" }
+install.strip = true
+# ctypes needs no Python ABI: one wheel per platform serves every Python 3.
+wheel.py-api = "py3"
+wheel.packages = ["src/pyaudiocpp"]
+wheel.license-files = ["LICENSE", "thirdparty/audio.cpp/LICENSE"]
+build-dir = "build/{wheel_tag}"
+sdist.exclude = [
+    "build/",
+    "thirdparty/audio.cpp/build/",
+    "thirdparty/audio.cpp/assets/figure/",
+    "thirdparty/audio.cpp/Notebooks/",
+]
+
+# Development uses `make lib` (copies the library into src/pyaudiocpp) and runs
+# tests from the source tree, so uv does not build the package on sync.
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = ["pytest>=8", "numpy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+# Untested: cibuildwheel needs docker for manylinux images. One build per
+# platform suffices because the wheel is py3-none; cibuildwheel reuses it
+# when testing other Python versions.
+[tool.cibuildwheel]
+build = "cp312-*"
+skip = "*-musllinux_* *-win32 *_i686"
+manylinux-x86_64-image = "manylinux_2_28"
+before-all = "make -C {project} sync"
+test-groups = ["dev"]
+# -c /dev/null drops pythonpath=["src"] so the installed wheel is what gets tested.
+test-command = "pytest -q -c /dev/null --rootdir={project}/tests {project}/tests --ignore={project}/tests/test_models.py"
+
+[tool.cibuildwheel.macos]
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }

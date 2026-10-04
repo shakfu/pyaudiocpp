@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# pyaudiocpp
+thirdparty/
+src/pyaudiocpp/libaudiocpp.*
+src/pyaudiocpp/audiocpp.dll
+models/
