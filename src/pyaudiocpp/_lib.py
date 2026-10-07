@@ -250,7 +250,7 @@ def lib() -> ctypes.CDLL:
     candidates = _candidates()
     if not candidates:
         raise OSError(
-            "libaudiocpp not found; set AUDIOCPP_LIBRARY or install a pyaudiocpp wheel"
+            "libaudiocpp not found; run `make lib`, set AUDIOCPP_LIBRARY, or install a pyaudiocpp wheel"
         )
     errors = []
     for path in candidates:

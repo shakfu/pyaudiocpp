@@ -15,7 +15,8 @@ import pyaudiocpp as ac
 from conftest import BACKEND
 
 MODELS = Path(os.environ.get("AUDIOCPP_MODELS", Path(__file__).resolve().parents[1] / "models"))
-THREADS = min(os.cpu_count() or 4, 8)
+# Above the performance-core count, ggml CPU runs slow down 10-1000x (8 threads on an M1).
+THREADS = int(os.environ.get("AUDIOCPP_TEST_THREADS", ac.core.DEFAULT_THREADS))
 
 KOKORO = MODELS / "Kokoro-82M-GGUF" / "kokoro-82m-q8_0.gguf"
 CITRINET = MODELS / "Citrinet-ASR-GGUF" / "citrinet-asr-q8_0.gguf"
@@ -187,5 +188,6 @@ def test_htdemucs_named_stems(registry, speech):
     for stem in result.named_audio.values():
         assert (stem.frames, stem.sample_rate, stem.channels) == (clip.frames, 44100, 1)
     stems = result.named_audio
-    # Speech input: the vocal stem carries the energy.
-    assert rms(stems["vocals"].samples) > 3 * max(rms(stems[k].samples) for k in ("drums", "bass"))
+    # Speech input: the vocal stem carries the energy. Source builds before audio.cpp
+    # 6418a64 leaked speech into "other" on CPU (vocals 0.05 rms, other 0.04).
+    assert rms(stems["vocals"].samples) > 3 * max(rms(stems[k].samples) for k in ("drums", "bass", "other"))

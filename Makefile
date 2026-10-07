@@ -1,5 +1,5 @@
 AUDIOCPP_REPO   := https://github.com/0xShug0/audio.cpp
-AUDIOCPP_COMMIT := e3e1bc7c767776baad9a1f2a07317a8dc26bc98d
+AUDIOCPP_COMMIT := 6418a6464039f81dd3bf0560a8dc90a64b1c15bf
 AUDIOCPP_DIR    := thirdparty/audio.cpp
 BUILD_DIR       := build/dev
 JOBS            ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu)
@@ -12,7 +12,7 @@ else
 LIBNAME := libaudiocpp.so
 endif
 
-.PHONY: all sync lib test models wheel repair clean reset
+.PHONY: all sync lib test bench demo models wheel repair clean reset
 
 all: lib
 
@@ -30,6 +30,15 @@ lib: sync
 
 test:
 	uv run pytest -q
+
+# Extra flags, e.g. make bench BENCH_ARGS="--backend cuda"
+bench:
+	@mkdir -p docs
+	set -o pipefail; PYTHONPATH=src uv run python tests/bench.py $(BENCH_ARGS) | tee docs/bench.md
+
+DEMOS := tts transcribe vad diarize separate
+demo:
+	set -e; for d in $(DEMOS); do echo "== $$d"; uv run python demo/$$d.py $(DEMO_ARGS); done
 
 HF_GGUF := https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/main
 TEST_MODELS := \

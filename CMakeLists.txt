@@ -12,6 +12,12 @@ if(_audiocpp_rev)
     set(AUDIOCPP_VERSION "git-${_audiocpp_rev}")
 endif()
 set(AUDIOCPP_BUILD_C_API ON CACHE BOOL "" FORCE)
+# Apple clang has no OpenMP; Homebrew's libomp would become a runtime dependency of
+# the dylib and wheel. Upstream's release builds without it, at no measured cost (README).
+if(APPLE)
+    set(ENGINE_ENABLE_OPENMP OFF CACHE BOOL "")
+    set(GGML_OPENMP OFF CACHE BOOL "")
+endif()
 # Compile model_specs/*.json into the library so a wheel needs no spec directory.
 set(AUDIOCPP_DEPLOYMENT_BUILD ON CACHE BOOL "" FORCE)
 
